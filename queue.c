@@ -14,40 +14,105 @@
 /* Create an empty queue */
 struct list_head *q_new()
 {
-    return NULL;
+    struct list_head *head = calloc(1, sizeof(struct list_head));
+
+    if (!head)
+        return NULL;
+
+    INIT_LIST_HEAD(head);
+
+    return head;
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *head) {}
+void q_free(struct list_head *head)
+{
+    struct list_head *node, *safe;
+
+    if (!head)
+        return;
+
+    list_for_each_safe (node, safe, head) {
+        element_t *e = container_of(node, element_t, list);
+        free(e->value);
+        list_del(node);
+    }
+
+    free(head);
+}
 
 /* Insert an element at head of queue */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    element_t *e = calloc(1, sizeof(element_t));
+
+    if (!e || !s)
+        return false;
+
+    e->value = strdup(s);
+    list_add(&e->list, head);
+
     return true;
 }
 
 /* Insert an element at tail of queue */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    element_t *e = calloc(1, sizeof(element_t));
+
+    if (!e || !s)
+        return false;
+
+    e->value = strdup(s);
+    list_add_tail(&e->list, head);
+
     return true;
 }
 
 /* Remove an element from head of queue */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    element_t *e;
+
+    if (!head || list_empty(head))
+        return NULL;
+
+    e = list_first_entry(head, element_t, list);
+    snprintf(sp, bufsize, "%s", e->value);
+    list_del(head->next);
+
+    return e;
 }
 
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    element_t *e;
+
+    if (!head || list_empty(head))
+        return NULL;
+
+    e = list_last_entry(head, element_t, list);
+    snprintf(sp, bufsize, "%s", e->value);
+    list_del(head->prev);
+
+    return e;
 }
 
 /* Return number of elements in queue */
 int q_size(struct list_head *head)
 {
-    return -1;
+    int size = 0;
+    struct list_head *node;
+
+    if (!head)
+        return 0;
+
+    list_for_each (node, head) {
+        size++;
+    }
+
+    return size;
 }
 
 /* Delete the middle node in queue */
