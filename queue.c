@@ -27,15 +27,16 @@ struct list_head *q_new()
 /* Free all storage used by queue */
 void q_free(struct list_head *head)
 {
-    struct list_head *node, *safe;
+    element_t *entry, *safe;
 
     if (!head)
         return;
 
-    list_for_each_safe (node, safe, head) {
-        element_t *e = container_of(node, element_t, list);
-        free(e->value);
-        list_del(node);
+    list_for_each_entry_safe (entry, safe, head, list) {
+        if (entry->value)
+            free(entry->value);
+        list_del(&entry->list);
+        free(entry);
     }
 
     free(head);
@@ -49,7 +50,10 @@ bool q_insert_head(struct list_head *head, char *s)
     if (!e || !s)
         return false;
 
-    e->value = strdup(s);
+    if (!(e->value = strdup(s))) {
+        free(e);
+        return false;
+    }
     list_add(&e->list, head);
 
     return true;
@@ -64,6 +68,10 @@ bool q_insert_tail(struct list_head *head, char *s)
         return false;
 
     e->value = strdup(s);
+    if (!(e->value = strdup(s))) {
+        free(e);
+        return false;
+    }
     list_add_tail(&e->list, head);
 
     return true;
@@ -72,13 +80,13 @@ bool q_insert_tail(struct list_head *head, char *s)
 /* Remove an element from head of queue */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    element_t *e;
-
     if (!head || list_empty(head))
         return NULL;
 
-    e = list_first_entry(head, element_t, list);
-    snprintf(sp, bufsize, "%s", e->value);
+    element_t *e = list_first_entry(head, element_t, list);
+    if (sp && snprintf(sp, bufsize, "%s", e->value) == bufsize)
+        sp[bufsize - 1] = '\0';
+
     list_del(head->next);
 
     return e;
@@ -87,13 +95,14 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    element_t *e;
 
     if (!head || list_empty(head))
         return NULL;
 
-    e = list_last_entry(head, element_t, list);
-    snprintf(sp, bufsize, "%s", e->value);
+    element_t *e = list_last_entry(head, element_t, list);
+    if (sp && snprintf(sp, bufsize, "%s", e->value) == bufsize)
+        sp[bufsize - 1] = '\0';
+
     list_del(head->prev);
 
     return e;
