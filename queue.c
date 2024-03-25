@@ -14,7 +14,7 @@
 /* Create an empty queue */
 struct list_head *q_new()
 {
-    struct list_head *head = calloc(1, sizeof(struct list_head));
+    struct list_head *head = malloc(sizeof(struct list_head));
 
     if (!head)
         return NULL;
@@ -45,7 +45,7 @@ void q_free(struct list_head *head)
 /* Insert an element at head of queue */
 bool q_insert_head(struct list_head *head, char *s)
 {
-    element_t *e = calloc(1, sizeof(element_t));
+    element_t *e = malloc(sizeof(element_t));
 
     if (!e || !s)
         return false;
@@ -62,7 +62,7 @@ bool q_insert_head(struct list_head *head, char *s)
 /* Insert an element at tail of queue */
 bool q_insert_tail(struct list_head *head, char *s)
 {
-    element_t *e = calloc(1, sizeof(element_t));
+    element_t *e = malloc(sizeof(element_t));
 
     if (!e || !s)
         return false;
