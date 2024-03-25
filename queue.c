@@ -10,6 +10,24 @@
  *   cppcheck-suppress nullPointer
  */
 
+void q_delete(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return;
+    element_t *e = list_entry(head, element_t, list);
+    list_del(head);
+    q_release_element(e);
+}
+
+int cmp(struct list_head *left, struct list_head *right)
+{
+    char *L = "", *R = "";
+    if (list_entry(left, element_t, list)->value)
+        L = list_entry(left, element_t, list)->value;
+    if (list_entry(right, element_t, list)->value)
+        R = list_entry(right, element_t, list)->value;
+    return strcmp(L, R);
+};
 
 /* Create an empty queue */
 struct list_head *q_new()
@@ -94,7 +112,6 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-
     if (!head || list_empty(head))
         return NULL;
 
@@ -124,23 +141,78 @@ int q_size(struct list_head *head)
 }
 
 /* Delete the middle node in queue */
+bool __q_delete_mid(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return false;
+    struct list_head *node, *tmp = head->next;
+    int i = 0;
+    list_for_each (node, head) {
+        if (i++ & 0x1)
+            tmp = tmp->next;
+    }
+    q_delete(tmp);
+    return true;
+}
+
 bool q_delete_mid(struct list_head *head)
 {
     // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
-    return true;
+    return __q_delete_mid(head);
 }
 
 /* Delete all nodes that have duplicate string */
-bool q_delete_dup(struct list_head *head)
+bool __q_delete_dup(struct list_head *head)
 {
-    // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
+    if (!head || list_empty(head))
+        return false;
+    struct list_head *node, *prev, *tmp;
+    list_for_each (node, head) {
+        if (node->next == head)
+            break;
+        if (cmp(node, node->next))
+            continue;
+        else {
+            prev = node;
+            q_delete(node->next);
+            node = prev->next;
+            while (node != head && cmp(prev, node) == 0) {
+                tmp = node->next;
+                q_delete(node);
+                node = tmp;
+            }
+            node = prev->prev;
+            q_delete(prev);
+        }
+    }
     return true;
 }
 
+bool q_delete_dup(struct list_head *head)
+{
+    // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
+    return __q_delete_dup(head);
+}
+
 /* Swap every two adjacent nodes */
+void __q_swap(struct list_head *head)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+    struct list_head *node;
+    list_for_each (node, head) {
+        if (node->next == head)
+            break;
+        struct list_head *next = node->next;
+        list_del(node);
+        list_add(node, next);
+    }
+}
+
 void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
+    __q_swap(head);
 }
 
 /* Reverse elements in queue */
