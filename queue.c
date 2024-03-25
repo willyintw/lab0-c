@@ -67,7 +67,6 @@ bool q_insert_tail(struct list_head *head, char *s)
     if (!e || !s)
         return false;
 
-    e->value = strdup(s);
     if (!(e->value = strdup(s))) {
         free(e);
         return false;
